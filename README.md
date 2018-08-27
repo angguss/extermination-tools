@@ -32,7 +32,7 @@ The game seems to use two types of gfx formats included in the two res files, ME
 These .gfx files are the following format:
 
 	struct gfx_file {
-		uint8_t		magic[4]; // always "dupa"
+		uint8_t		unk[4]; // if "dupa" then not this format
 		uint16_t 	width;
 		uint16_t	height;
 		uint8_t		pixels[width*height];
