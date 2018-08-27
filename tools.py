@@ -26,6 +26,7 @@ class ResFileEntry(object):
         .file_index_format, bytes)
         # Strip null bytes
         self.filename = unpacked[0].decode('utf-8').split('\0',1)[0]
+        # This is always 1 in demo files
         self.unk_1 = unpacked[1]
         self.file_offset = unpacked[2]
         self.file_length = unpacked[3]
@@ -33,9 +34,11 @@ class ResFileEntry(object):
     def __str__(self):
         return str(self.filename)
 
+# Read a RES file and extract contents to a directory
 def read_res(output_dir, filename):
     header_format = '<4cI'
     
+    # Attempt to create destination directory
     try:
         os.makedirs(dest_path)
     except:
@@ -47,31 +50,33 @@ def read_res(output_dir, filename):
         header = struct.unpack(header_format, f.read(8))
         f.seek(header[4])
 
-
+        # Read all entries
         while(1):
             try:
                 files.append(ResFileEntry(f.read(32)))
             except:
                 break
+		
+		# Dump out all entries
+	    for file in files:
+	        f.seek(file.file_offset)
+	        file_bytes = f.read(file.file_length)
+	        dest_file = output_dir + "/" + file.filename
+	        dest_path = os.path.dirname(dest_file)
+	        try:
+	            os.makedirs(dest_path)
+	        except:
+	            pass
+	        with open(dest_file, "wb") as fw:
+	            fw.write(file_bytes)
+	        if ".GFX" in dest_file.upper():
+	            try:
+	                convert_gfx_to_png(dest_file)
+	            except:
+	                print("Failed to convert: " + dest_file)
+	                pass
 
-    for file in files:
-        f.seek(file.file_offset)
-        file_bytes = f.read(file.file_length)
-        dest_file = output_dir + "/" + file.filename
-        dest_path = os.path.dirname(dest_file)
-        try:
-            os.makedirs(dest_path)
-        except:
-            pass
-        with open(dest_file, "wb") as fw:
-            fw.write(file_bytes)
-        if ".GFX" in dest_file.upper():
-            try:
-                convert_gfx_to_png(dest_file)
-            except:
-                print("Failed to convert: " + dest_file)
-                pass
-
+# Convert a menu.res GFX format file to PNG
 def convert_gfx_to_png(filename):
     in_file = filename
     with open(in_file, "rb") as f:
@@ -82,7 +87,7 @@ def convert_gfx_to_png(filename):
         w = struct.unpack('<H', f.read(2))[0]
         h = struct.unpack('<H', f.read(2))[0]
 
-        print(w, h)
+        print("Converting " + filename + " to PNG")
         readlen = os.path.getsize(in_file) - 4
         pixel_ct = int(readlen / 2)
         struct_str = '<' + str(pixel_ct) + 'H'
