@@ -56,25 +56,25 @@ def read_res(output_dir, filename):
                 files.append(ResFileEntry(f.read(32)))
             except:
                 break
-		
-		# Dump out all entries
-	    for file in files:
-	        f.seek(file.file_offset)
-	        file_bytes = f.read(file.file_length)
-	        dest_file = output_dir + "/" + file.filename
-	        dest_path = os.path.dirname(dest_file)
-	        try:
-	            os.makedirs(dest_path)
-	        except:
-	            pass
-	        with open(dest_file, "wb") as fw:
-	            fw.write(file_bytes)
-	        if ".GFX" in dest_file.upper():
-	            try:
-	                convert_gfx_to_png(dest_file)
-	            except:
-	                print("Failed to convert: " + dest_file)
-	                pass
+        
+        # Dump out all entries
+        for file in files:
+            f.seek(file.file_offset)
+            file_bytes = f.read(file.file_length)
+            dest_file = output_dir + "/" + file.filename
+            dest_path = os.path.dirname(dest_file)
+            try:
+                os.makedirs(dest_path)
+            except:
+                pass
+            with open(dest_file, "wb") as fw:
+                fw.write(file_bytes)
+            if ".GFX" in dest_file.upper():
+                try:
+                    convert_gfx_to_png(dest_file)
+                except:
+                    print("Failed to convert: " + dest_file)
+                    pass
 
 # Convert a menu.res GFX format file to PNG
 def convert_gfx_to_png(filename):
