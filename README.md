@@ -2,7 +2,41 @@
 
 A collection of tools/snippets used to manipulate/extract/convert various resource/data files for the game Extermination/Mission: humanity with accompanying findings and ramblings.
 
-## RES files
+
+## Full Game
+
+The full version uses RSR files unlike the RES files packaged with the demo. An RSR file requires an accompanying NAM file which acts as the index for the data in the RSR file. The NAM index file is a similar format to the RES files seen in the demo.
+
+	struct nam_file_index {
+		uint8_t		filename[47];
+		uint8_t		type[5];
+		uint32_t	offset;
+		uint32_t 	compressed_size;
+		uint32_t	decompressed_size
+	}
+
+Once the index file has been read, the compressed contents of each packed entry from the RSR file can be read by reading from offset -> offset + compressed_size.
+
+### Decompression
+
+Reversing the compression proved a challenge, the game uses a variant of LZW and re-implementation has not been achieved yet. The files can however be decompressed using the original code & DLL injection
+
+* Compile the project in ./rsr_dumper/extermin
+* Make a copy of the original extermin.exe
+* Patch the exe to add an import to your compiled extermin.dll & replace the body of WinMain (0x4A7093) with the patch data below
+* Run the new executable, click "Yes" when it asks you to dump and it will decompress the files to disk (by default C:/tmp/extermination-dump)
+
+### Patch data
+
+	@0x4A7093, 55 89 E5 FF 75 08 6A 00 90 FF 75 10 FF 75 14 FF 15 25 01 05 01 C9 C2 10 00 90 90
+
+### Further work
+
+The dll project provides a basic framework for calling into the existing game from your own code, there is some unfinished work in extermin.c which starts by replacing the WinMain & WndProc functions with new ones. There are unused addresses listed in addresses.h, there are many more I haven't pulled across from the RE database but with the decompressed files it should be easy to pull apart in IDA or Ghidra.
+
+## Demo
+
+### RES files
 
 RES files are a very simple VFS filetype with no compression. The format includes a header which points to a list of file entries. In the demo there are two RES files, MENU.RES and PANEL.RES. Both are the same format. The header format as a C struct is the following:
 
@@ -22,6 +56,8 @@ The file entry index format is:
 	};
 
 The 32 byte file index entries should be read until EOF.
+
+## Shared
 
 ## GFX files
 
@@ -133,7 +169,7 @@ The values can be recovered by applying XOR 122 against each character, revealin
 	_TAP
 	_SPY
 	_NEW POWER_
-	_TECHLAND RULEZ 
+	_TECHLAND RULEZ
 	_BAJADERA PARTY
 	_RESOURCES
 	640&X480
